@@ -34,11 +34,22 @@ class Signals(IntFlag):
 
 class MicroInstructions(Signals):
     NOP = 0
+
     IP_TO_MP = Signals.IPO | Signals.MPI | Signals.IPC
     MO_TO_IH = Signals.MOO | Signals.IHI | Signals.CCR
+
     ADDITION = Signals.ALO | Signals.RAI | Signals.RFI
     SUBTRACTION = Signals.ALO | Signals.RAI | Signals.RFI | Signals.ALF
     COMPARE = Signals.ALO | Signals.RFI | Signals.ALF
+
+    JMP = Signals.MOO | Signals.IPJ1
+    JB = Signals.MOO | Signals.IPJ2
+    JBE = Signals.MOO | Signals.IPJ1 | Signals.IPJ2
+    JE = Signals.MOO | Signals.IPJ3
+    JNE = Signals.MOO | Signals.IPJ1 | Signals.IPJ3
+    JAE = Signals.MOO | Signals.IPJ2 | Signals.IPJ3
+    JA = Signals.MOO | Signals.IPJ1 | Signals.IPJ2 | Signals.IPJ3
+
 
 NUM_OF_COMMANDS = 2**8
 NUM_OF_MICRO_COMMANDS_PER_COMMAND = 2**3
@@ -54,321 +65,713 @@ class MicroCode(object):
         # create a matrix representing the default micro code
         self.data = [[DEFAULT_MICRO_INSTRUCTION for j in range(NUM_OF_MICRO_COMMANDS_PER_COMMAND)] for i in range(NUM_OF_COMMANDS)]
 
-    def _fillMicroCode(self) -> None:
-        # fill the micro code commands
-
-        # NOP
-        # don't do anything
-        self._setCommand(0, (
-            MicroInstructions.NOP,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        ################################################################################
-        # MOV
-        ################################################################################
-
-        # MOV A B
-        # move register A value to register B
-        self._setCommand(1, (
-            Signals.RAO | Signals.RBI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV A C
-        # move register A value to register C
-        self._setCommand(2, (
-            Signals.RAO | Signals.RCI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV B A
-        # move register B value to register A
-        self._setCommand(3, (
-            Signals.RBO | Signals.RAI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV B C
-        # move register B value to register C
-        self._setCommand(4, (
-            Signals.RBO | Signals.RCI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV C A
-        # move register C value to register A
-        self._setCommand(5, (
-            Signals.RCO | Signals.RAI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV C B
-        # move register C value to register B
-        self._setCommand(6, (
-            Signals.RCO | Signals.RBI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV VALUE A
-        # move the given value to register A
-        self._setCommand(7, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.RAI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV {ROM_ADDRESS} A
-        # move the ROM value that in the given address to register A
-        self._setCommand(8, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.MOO | Signals.RAI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV [RAM_ADDRESS] A
-        # move the RAM value that in the given address to register A
-        self._setCommand(9, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.MAO | Signals.RAI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV A [RAM_ADDRESS]
-        # move register A value to RAM in the given address
-        self._setCommand(10, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.RAO | Signals.MAI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV VALUE B
-        # move the given value to register B
-        self._setCommand(11, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.RBI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV {ROM_ADDRESS} B
-        # move the ROM value that in the given address to register B
-        self._setCommand(12, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.MOO | Signals.RBI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV [RAM_ADDRESS] B
-        # move the RAM value that in the given address to register B
-        self._setCommand(13, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.MAO | Signals.RBI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV B [RAM_ADDRESS]
-        # move register B value to RAM in the given address
-        self._setCommand(14, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.RBO | Signals.MAI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV VALUE C
-        # move the given value to register C
-        self._setCommand(15, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.RCI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV {ROM_ADDRESS} C
-        # move the ROM value that in the given address to register C
-        self._setCommand(16, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.MOO | Signals.RCI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV [RAM_ADDRESS] C
-        # move the RAM value that in the given address to register C
-        self._setCommand(17, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.MAO | Signals.RCI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # MOV C [RAM_ADDRESS]
-        # move register C value to RAM in the given address
-        self._setCommand(18, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.RCO | Signals.MAI,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        ################################################################################
-        # ADD
-        ################################################################################
-
-        # ADD A
-        # calculate the sum of register A value and register A value (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(19, (
-            Signals.RAO | Signals.RBI,
-            MicroInstructions.ADDITION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # ADD B
-        # calculate the sum of register A value and register B value (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(20, (
-            MicroInstructions.ADDITION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # ADD C
-        # calculate the sum of register A value and register C value (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(21, (
-            Signals.RCO | Signals.RBI,
-            MicroInstructions.ADDITION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # ADD VALUE
-        # calculate the sum of register A value and the given value (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(22, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.RBI,
-            MicroInstructions.ADDITION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # ADD {ROM_ADDRESS}
-        # calculate the sum of register A value and the ROM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(23, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.MOO | Signals.RBI,
-            MicroInstructions.ADDITION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # ADD [RAM_ADDRESS]
-        # calculate the sum of register A value and the RAM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(24, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.MAO | Signals.RBI,
-            MicroInstructions.ADDITION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        ################################################################################
-        # SUB
-        ################################################################################
-
-        # SUB A
-        # calculate the subtraction of register A value and register A value (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(25, (
-            Signals.RAO | Signals.RBI,
-            MicroInstructions.SUBTRACTION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # SUB B
-        # calculate the subtraction of register A value and register B value (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(26, (
-            MicroInstructions.SUBTRACTION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # SUB C
-        # calculate the subtraction of register A value and register C value (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(27, (
-            Signals.RCO | Signals.RBI,
-            MicroInstructions.SUBTRACTION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # SUB VALUE
-        # calculate the subtraction of register A value and the given value (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(28, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.RBI,
-            MicroInstructions.SUBTRACTION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # SUB {ROM_ADDRESS}
-        # calculate the subtraction of register A value and the ROM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(29, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.MOO | Signals.RBI,
-            MicroInstructions.SUBTRACTION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
-        # SUB [RAM_ADDRESS]
-        # calculate the subtraction of register A value and the RAM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
-        self._setCommand(30, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | Signals.MPI,
-            Signals.MAO | Signals.RBI,
-            MicroInstructions.SUBTRACTION,
-            MicroInstructions.IP_TO_MP,
-            MicroInstructions.MO_TO_IH
-        ))
-
     def _setCommand(self, commandAddress: int, microCommands: Tuple[Signals]) -> None:
+        microCommands = (*microCommands, MicroInstructions.IP_TO_MP, MicroInstructions.MO_TO_IH)
+
         assert commandAddress < NUM_OF_COMMANDS
+        assert len(microCommands) <= NUM_OF_MICRO_COMMANDS_PER_COMMAND
 
-        microCommandsLength = len(microCommands)
-        assert microCommandsLength <= NUM_OF_MICRO_COMMANDS_PER_COMMAND
-
-        for i in range(microCommandsLength):
+        for i in range(len(microCommands)):
             self.data[commandAddress][i] = microCommands[i]
 
     def dumps(self) -> bytes:
         pass
+
+    def _fillMicroCode(self) -> None:
+        # fill the micro code commands
+
+        ################################################################################
+        # special instructions (0-49)
+        ################################################################################
+
+        # HLT
+        # halt the clock to stop execution
+        self._setCommand(0, (
+            Signals.CLH
+        ))
+
+        # NOP
+        # don't do anything
+        self._setCommand(1, (
+            MicroInstructions.NOP
+        ))
+
+        ################################################################################
+        # MOV register A instructions (100-119)
+        ################################################################################
+
+        # MOV B A
+        # move register B value to register A
+        self._setCommand(100, (
+            Signals.RBO | Signals.RAI
+        ))
+
+        # MOV C A
+        # move register C value to register A
+        self._setCommand(101, (
+            Signals.RCO | Signals.RAI
+        ))
+
+        # MOV VALUE A
+        # move the given value to register A
+        self._setCommand(102, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.RAI
+        ))
+
+        # MOV {A} A
+        # move the ROM value that in register A address to register A
+        self._setCommand(103, (
+            Signals.RAO | Signals.MPI,
+            Signals.MOO | Signals.RAI
+        ))
+
+        # MOV {B} A
+        # move the ROM value that in register B address to register A
+        self._setCommand(104, (
+            Signals.RBO | Signals.MPI,
+            Signals.MOO | Signals.RAI
+        ))
+
+        # MOV {C} A
+        # move the ROM value that in register C address to register A
+        self._setCommand(105, (
+            Signals.RCO | Signals.MPI,
+            Signals.MOO | Signals.RAI
+        ))
+
+        # MOV {ROM_ADDRESS} A
+        # move the ROM value that in the given address to register A
+        self._setCommand(106, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MOO | Signals.RAI
+        ))
+
+        # MOV [A] A
+        # move the RAM value that in register A address to register A
+        self._setCommand(107, (
+            Signals.RAO | Signals.MPI,
+            Signals.MAO | Signals.RAI
+        ))
+
+        # MOV [B] A
+        # move the RAM value that in register B address to register A
+        self._setCommand(108, (
+            Signals.RBO | Signals.MPI,
+            Signals.MAO | Signals.RAI
+        ))
+
+        # MOV [C] A
+        # move the RAM value that in register C address to register A
+        self._setCommand(109, (
+            Signals.RCO | Signals.MPI,
+            Signals.MAO | Signals.RAI
+        ))
+
+        # MOV [RAM_ADDRESS] A
+        # move the RAM value that in the given address to register A
+        self._setCommand(110, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MAO | Signals.RAI
+        ))
+
+        # MOV A [A]
+        # move register A value to RAM in register A address
+        self._setCommand(111, (
+            Signals.RAO | Signals.MPI,
+            Signals.RAO | Signals.MAI
+        ))
+
+        # MOV A [B]
+        # move register A value to RAM in register B address
+        self._setCommand(112, (
+            Signals.RBO | Signals.MPI,
+            Signals.RAO | Signals.MAI
+        ))
+
+        # MOV A [C]
+        # move register A value to RAM in register C address
+        self._setCommand(113, (
+            Signals.RCO | Signals.MPI,
+            Signals.RAO | Signals.MAI
+        ))
+
+        # MOV A [RAM_ADDRESS]
+        # move register A value to RAM in the given address
+        self._setCommand(114, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.RAO | Signals.MAI
+        ))
+
+        ################################################################################
+        # MOV register B instructions (120-139)
+        ################################################################################
+
+        # MOV A B
+        # move register A value to register B
+        self._setCommand(120, (
+            Signals.RAO | Signals.RBI
+        ))
+
+        # MOV C B
+        # move register C value to register B
+        self._setCommand(121, (
+            Signals.RCO | Signals.RBI
+        ))
+
+        # MOV VALUE B
+        # move the given value to register B
+        self._setCommand(122, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.RBI
+        ))
+
+        # MOV {A} B
+        # move the ROM value that in register A address to register B
+        self._setCommand(123, (
+            Signals.RAO | Signals.MPI,
+            Signals.MOO | Signals.RBI
+        ))
+
+        # MOV {B} B
+        # move the ROM value that in register B address to register B
+        self._setCommand(124, (
+            Signals.RBO | Signals.MPI,
+            Signals.MOO | Signals.RBI
+        ))
+
+        # MOV {C} B
+        # move the ROM value that in register C address to register B
+        self._setCommand(125, (
+            Signals.RCO | Signals.MPI,
+            Signals.MOO | Signals.RBI
+        ))
+
+        # MOV {ROM_ADDRESS} B
+        # move the ROM value that in the given address to register B
+        self._setCommand(126, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MOO | Signals.RBI
+        ))
+
+        # MOV [A] B
+        # move the RAM value that in register A address to register B
+        self._setCommand(127, (
+            Signals.RAO | Signals.MPI,
+            Signals.MAO | Signals.RBI
+        ))
+
+        # MOV [B] B
+        # move the RAM value that in register B address to register B
+        self._setCommand(128, (
+            Signals.RBO | Signals.MPI,
+            Signals.MAO | Signals.RBI
+        ))
+
+        # MOV [C] B
+        # move the RAM value that in register C address to register B
+        self._setCommand(129, (
+            Signals.RCO | Signals.MPI,
+            Signals.MAO | Signals.RBI
+        ))
+
+        # MOV [RAM_ADDRESS] B
+        # move the RAM value that in the given address to register B
+        self._setCommand(130, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MAO | Signals.RBI
+        ))
+
+        # MOV B [A]
+        # move register B value to RAM in register A address
+        self._setCommand(131, (
+            Signals.RAO | Signals.MPI,
+            Signals.RBO | Signals.MAI
+        ))
+
+        # MOV B [B]
+        # move register B value to RAM in register B address
+        self._setCommand(132, (
+            Signals.RBO | Signals.MPI,
+            Signals.RBO | Signals.MAI
+        ))
+
+        # MOV B [C]
+        # move register B value to RAM in register C address
+        self._setCommand(133, (
+            Signals.RCO | Signals.MPI,
+            Signals.RBO | Signals.MAI
+        ))
+
+        # MOV B [RAM_ADDRESS]
+        # move register B value to RAM in the given address
+        self._setCommand(134, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.RBO | Signals.MAI
+        ))
+
+        ################################################################################
+        # MOV register C instructions (140-159)
+        ################################################################################
+
+        # MOV A C
+        # move register A value to register C
+        self._setCommand(140, (
+            Signals.RAO | Signals.RCI
+        ))
+
+        # MOV B C
+        # move register B value to register C
+        self._setCommand(141, (
+            Signals.RBO | Signals.RCI
+        ))
+
+        # MOV VALUE C
+        # move the given value to register C
+        self._setCommand(142, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.RCI
+        ))
+
+        # MOV {A} C
+        # move the ROM value that in register A address to register C
+        self._setCommand(143, (
+            Signals.RAO | Signals.MPI,
+            Signals.MOO | Signals.RCI
+        ))
+
+        # MOV {B} C
+        # move the ROM value that in register B address to register C
+        self._setCommand(144, (
+            Signals.RBO | Signals.MPI,
+            Signals.MOO | Signals.RCI
+        ))
+
+        # MOV {C} C
+        # move the ROM value that in register C address to register C
+        self._setCommand(145, (
+            Signals.RCO | Signals.MPI,
+            Signals.MOO | Signals.RCI
+        ))
+
+        # MOV {ROM_ADDRESS} C
+        # move the ROM value that in the given address to register C
+        self._setCommand(146, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MOO | Signals.RCI
+        ))
+
+        # MOV [A] C
+        # move the RAM value that in register A address to register C
+        self._setCommand(147, (
+            Signals.RAO | Signals.MPI,
+            Signals.MAO | Signals.RCI
+        ))
+
+        # MOV [B] C
+        # move the RAM value that in register B address to register C
+        self._setCommand(148, (
+            Signals.RBO | Signals.MPI,
+            Signals.MAO | Signals.RCI
+        ))
+
+        # MOV [C] C
+        # move the RAM value that in register C address to register C
+        self._setCommand(149, (
+            Signals.RCO | Signals.MPI,
+            Signals.MAO | Signals.RCI
+        ))
+
+        # MOV [RAM_ADDRESS] C
+        # move the RAM value that in the given address to register C
+        self._setCommand(150, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MAO | Signals.RCI
+        ))
+
+        # MOV C [A]
+        # move register C value to RAM in register A address
+        self._setCommand(151, (
+            Signals.RAO | Signals.MPI,
+            Signals.RCO | Signals.MAI
+        ))
+
+        # MOV C [B]
+        # move register C value to RAM in register B address
+        self._setCommand(152, (
+            Signals.RBO | Signals.MPI,
+            Signals.RCO | Signals.MAI
+        ))
+
+        # MOV C [C]
+        # move register C value to RAM in register C address
+        self._setCommand(153, (
+            Signals.RCO | Signals.MPI,
+            Signals.RCO | Signals.MAI
+        ))
+
+        # MOV C [RAM_ADDRESS]
+        # move register C value to RAM in the given address
+        self._setCommand(154, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.RCO | Signals.MAI
+        ))
+
+        ################################################################################
+        # ADD instructions (160-179)
+        ################################################################################
+
+        # ADD A
+        # calculate the sum of register A value with register A value (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(160, (
+            Signals.RAO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD B
+        # calculate the sum of register A value with register B value (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(161, (
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD C
+        # calculate the sum of register A value with register C value (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(162, (
+            Signals.RCO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD VALUE
+        # calculate the sum of register A value with the given value (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(163, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD {A}
+        # calculate the sum of register A value with the ROM value that in register A address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(164, (
+            Signals.RAO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD {B}
+        # calculate the sum of register A value with the ROM value that in register B address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(165, (
+            Signals.RBO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD {C}
+        # calculate the sum of register A value with the ROM value that in register C address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(166, (
+            Signals.RCO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD {ROM_ADDRESS}
+        # calculate the sum of register A value with the ROM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(167, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD [A]
+        # calculate the sum of register A value with the RAM value that in register A address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(168, (
+            Signals.RAO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD [B]
+        # calculate the sum of register A value with the RAM value that in register B address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(169, (
+            Signals.RBO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD [C]
+        # calculate the sum of register A value with the RAM value that in register C address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(170, (
+            Signals.RCO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        # ADD [RAM_ADDRESS]
+        # calculate the sum of register A value with the RAM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(171, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.ADDITION
+        ))
+
+        ################################################################################
+        # SUB instructions (180-199)
+        ################################################################################
+
+        # SUB A
+        # calculate the subtraction of register A value with register A value (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(180, (
+            Signals.RAO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB B
+        # calculate the subtraction of register A value with register B value (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(181, (
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB C
+        # calculate the subtraction of register A value with register C value (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(182, (
+            Signals.RCO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB VALUE
+        # calculate the subtraction of register A value with the given value (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(183, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB {A}
+        # calculate the subtraction of register A value with the ROM value that in register A address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(184, (
+            Signals.RAO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB {B}
+        # calculate the subtraction of register A value with the ROM value that in register B address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(185, (
+            Signals.RBO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB {C}
+        # calculate the subtraction of register A value with the ROM value that in register C address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(186, (
+            Signals.RCO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB {ROM_ADDRESS}
+        # calculate the subtraction of register A value with the ROM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(187, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB [A]
+        # calculate the subtraction of register A value with the RAM value that in register A address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(188, (
+            Signals.RAO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB [B]
+        # calculate the subtraction of register A value with the RAM value that in register B address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(189, (
+            Signals.RBO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB [C]
+        # calculate the subtraction of register A value with the RAM value that in register C address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(190, (
+            Signals.RCO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        # SUB [RAM_ADDRESS]
+        # calculate the subtraction of register A value with the RAM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
+        self._setCommand(191, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.SUBTRACTION
+        ))
+
+        ################################################################################
+        # CMP instructions (200-219)
+        ################################################################################
+
+        # CMP A
+        # compare (subtract) register A value with register A value (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(200, (
+            Signals.RAO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP B
+        # compare (subtract) register A value with register B value (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(201, (
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP C
+        # compare (subtract) register A value with register C value (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(202, (
+            Signals.RCO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP VALUE
+        # compare (subtract) register A value with the given value (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(203, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP {A}
+        # compare (subtract) register A value with the ROM value that in register A address (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(204, (
+            Signals.RAO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP {B}
+        # compare (subtract) register A value with the ROM value that in register B address (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(205, (
+            Signals.RBO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP {C}
+        # compare (subtract) register A value with the ROM value that in register C address (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(206, (
+            Signals.RCO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP {ROM_ADDRESS}
+        # compare (subtract) register A value with the ROM value that in the given address (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(207, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MOO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP [A]
+        # compare (subtract) register A value with the RAM value that in register A address (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(208, (
+            Signals.RAO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP [B]
+        # compare (subtract) register A value with the RAM value that in register B address (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(209, (
+            Signals.RBO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP [C]
+        # compare (subtract) register A value with the RAM value that in register C address (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(210, (
+            Signals.RCO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        # CMP [RAM_ADDRESS]
+        # compare (subtract) register A value with the RAM value that in the given address (doesn't save the result, override register B, ZF and CF flags are affected)
+        self._setCommand(211, (
+            MicroInstructions.IP_TO_MP,
+            Signals.MOO | Signals.MPI,
+            Signals.MAO | Signals.RBI,
+            MicroInstructions.COMPARE
+        ))
+
+        ################################################################################
+        # JMP instructions (220-229)
+        ################################################################################
+
+        # JMP VALUE
+        # jump to the given address
+        self._setCommand(220, (
+            MicroInstructions.IP_TO_MP,
+            MicroInstructions.JMP
+        ))
+
+        # JB VALUE
+        # jump to the given address if CMP < 0 (CF==1)
+        self._setCommand(221, (
+            MicroInstructions.IP_TO_MP,
+            MicroInstructions.JB
+        ))
+
+        # JBE VALUE
+        # jump to the given address if CMP <= 0 (ZF==1 or CF==1)
+        self._setCommand(222, (
+            MicroInstructions.IP_TO_MP,
+            MicroInstructions.JBE
+        ))
+
+        # JE VALUE
+        # jump to the given address if CMP == 0 (ZF==1)
+        self._setCommand(223, (
+            MicroInstructions.IP_TO_MP,
+            MicroInstructions.JE
+        ))
+
+        # JNE VALUE
+        # jump to the given address if CMP != 0 (ZF==0)
+        self._setCommand(224, (
+            MicroInstructions.IP_TO_MP,
+            MicroInstructions.JNE
+        ))
+
+        # JAE VALUE
+        # jump to the given address if CMP >= 0 (CF==0)
+        self._setCommand(225, (
+            MicroInstructions.IP_TO_MP,
+            MicroInstructions.JAE
+        ))
+
+        # JA VALUE
+        # jump to the given address if CMP > 0 (ZF==0 and CF==0)
+        self._setCommand(226, (
+            MicroInstructions.IP_TO_MP,
+            MicroInstructions.JA
+        ))
 
 
 def main() -> None:
