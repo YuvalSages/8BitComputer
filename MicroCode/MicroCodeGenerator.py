@@ -42,13 +42,13 @@ class MicroInstructions(Signals):
     SUBTRACTION = Signals.ALO | Signals.RAI | Signals.RFI | Signals.ALF
     COMPARE = Signals.ALO | Signals.RFI | Signals.ALF
 
-    JMP = Signals.MOO | Signals.IPJ1
-    JB = Signals.MOO | Signals.IPJ2
-    JBE = Signals.MOO | Signals.IPJ1 | Signals.IPJ2
-    JE = Signals.MOO | Signals.IPJ3
-    JNE = Signals.MOO | Signals.IPJ1 | Signals.IPJ3
-    JAE = Signals.MOO | Signals.IPJ2 | Signals.IPJ3
-    JA = Signals.MOO | Signals.IPJ1 | Signals.IPJ2 | Signals.IPJ3
+    JMP = Signals.IPJ1
+    JB = Signals.IPJ2
+    JBE = Signals.IPJ1 | Signals.IPJ2
+    JE = Signals.IPJ3
+    JNE = Signals.IPJ1 | Signals.IPJ3
+    JAE = Signals.IPJ2 | Signals.IPJ3
+    JA = Signals.IPJ1 | Signals.IPJ2 | Signals.IPJ3
 
 
 NUM_OF_COMMANDS = 2**8
@@ -721,56 +721,102 @@ class MicroCode(object):
         ))
 
         ################################################################################
-        # JMP instructions (220-229)
+        # JMP to given VALUE instructions (220-229)
         ################################################################################
 
         # JMP VALUE
         # jump to the given address
         self._setCommand(220, (
             MicroInstructions.IP_TO_MP,
-            MicroInstructions.JMP
+            Signals.MOO | MicroInstructions.JMP
         ))
 
         # JB VALUE
         # jump to the given address if CMP < 0 (CF==1)
         self._setCommand(221, (
             MicroInstructions.IP_TO_MP,
-            MicroInstructions.JB
+            Signals.MOO | MicroInstructions.JB
         ))
 
         # JBE VALUE
         # jump to the given address if CMP <= 0 (ZF==1 or CF==1)
         self._setCommand(222, (
             MicroInstructions.IP_TO_MP,
-            MicroInstructions.JBE
+            Signals.MOO | MicroInstructions.JBE
         ))
 
         # JE VALUE
         # jump to the given address if CMP == 0 (ZF==1)
         self._setCommand(223, (
             MicroInstructions.IP_TO_MP,
-            MicroInstructions.JE
+            Signals.MOO | MicroInstructions.JE
         ))
 
         # JNE VALUE
         # jump to the given address if CMP != 0 (ZF==0)
         self._setCommand(224, (
             MicroInstructions.IP_TO_MP,
-            MicroInstructions.JNE
+            Signals.MOO | MicroInstructions.JNE
         ))
 
         # JAE VALUE
         # jump to the given address if CMP >= 0 (CF==0)
         self._setCommand(225, (
             MicroInstructions.IP_TO_MP,
-            MicroInstructions.JAE
+            Signals.MOO | MicroInstructions.JAE
         ))
 
         # JA VALUE
         # jump to the given address if CMP > 0 (ZF==0 and CF==0)
         self._setCommand(226, (
             MicroInstructions.IP_TO_MP,
-            MicroInstructions.JA
+            Signals.MOO | MicroInstructions.JA
+        ))
+
+        ################################################################################
+        # JMP to register A Value instructions (230-239)
+        ################################################################################
+
+        # JMP A
+        # jump to the address that in register A
+        self._setCommand(230, (
+            Signals.RAO | MicroInstructions.JMP
+        ))
+
+        # JB A
+        # jump to the address that in register A if CMP < 0 (CF==1)
+        self._setCommand(231, (
+            Signals.RAO | MicroInstructions.JB
+        ))
+
+        # JBE A
+        # jump to the address that in register A if CMP <= 0 (ZF==1 or CF==1)
+        self._setCommand(232, (
+            Signals.RAO | MicroInstructions.JBE
+        ))
+
+        # JE A
+        # jump to the address that in register A if CMP == 0 (ZF==1)
+        self._setCommand(233, (
+            Signals.RAO | MicroInstructions.JE
+        ))
+
+        # JNE A
+        # jump to the address that in register A if CMP != 0 (ZF==0)
+        self._setCommand(234, (
+            Signals.RAO | MicroInstructions.JNE
+        ))
+
+        # JAE A
+        # jump to the address that in register A if CMP >= 0 (CF==0)
+        self._setCommand(235, (
+            Signals.RAO | MicroInstructions.JAE
+        ))
+
+        # JA A
+        # jump to the address that in register A if CMP > 0 (ZF==0 and CF==0)
+        self._setCommand(236, (
+            Signals.RAO | MicroInstructions.JA
         ))
 
 
