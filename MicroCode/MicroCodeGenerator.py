@@ -32,7 +32,7 @@ class Signals(IntFlag):
     IPJ4 = 2**23  # INSTRUCTION  POINTER  JUMP_4
 
 
-class MicroInstructions(Signals):
+class MicroCommands(Signals):
     NOP = 0
 
     IP_TO_MP = Signals.IPO | Signals.MPI | Signals.IPC
@@ -51,9 +51,10 @@ class MicroInstructions(Signals):
     JA = Signals.IPJ1 | Signals.IPJ2 | Signals.IPJ3
 
 
+ADDRESS_SPACE_SIZE = 2**11
 NUM_OF_COMMANDS = 2**8
 NUM_OF_MICRO_COMMANDS_PER_COMMAND = 2**3
-DEFAULT_MICRO_INSTRUCTION = Signals.CLH
+DEFAULT_MICRO_COMMAND = Signals.CLH
 
 
 class MicroCode(object):
@@ -62,17 +63,18 @@ class MicroCode(object):
         self._fillMicroCode()
 
     def _initializeDataStructure(self) -> None:
-        # create a matrix representing the default micro code
-        self.data = [[DEFAULT_MICRO_INSTRUCTION for j in range(NUM_OF_MICRO_COMMANDS_PER_COMMAND)] for i in range(NUM_OF_COMMANDS)]
+        # create a array representing the default micro code
+        self.data = [DEFAULT_MICRO_COMMAND for i in range(ADDRESS_SPACE_SIZE)]
 
     def _setCommand(self, commandAddress: int, microCommands: Tuple[Signals]) -> None:
-        microCommands = (*microCommands, MicroInstructions.IP_TO_MP, MicroInstructions.MO_TO_IH)
+        microCommands = (*microCommands, MicroCommands.IP_TO_MP, MicroCommands.MO_TO_IH)
 
         assert commandAddress < NUM_OF_COMMANDS
         assert len(microCommands) <= NUM_OF_MICRO_COMMANDS_PER_COMMAND
 
         for i in range(len(microCommands)):
-            self.data[commandAddress][i] = microCommands[i]
+            fullAddress = (i << 8) | commandAddress
+            self.data[fullAddress] = microCommands[i]
 
     def dumps(self) -> bytes:
         pass
@@ -93,7 +95,7 @@ class MicroCode(object):
         # NOP
         # don't do anything
         self._setCommand(1, (
-            MicroInstructions.NOP
+            MicroCommands.NOP
         ))
 
         ################################################################################
@@ -115,7 +117,7 @@ class MicroCode(object):
         # MOV VALUE A
         # move the given value to register A
         self._setCommand(102, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.RAI
         ))
 
@@ -143,7 +145,7 @@ class MicroCode(object):
         # MOV {ROM_ADDRESS} A
         # move the ROM value that in the given address to register A
         self._setCommand(106, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MOO | Signals.RAI
         ))
@@ -172,7 +174,7 @@ class MicroCode(object):
         # MOV [RAM_ADDRESS] A
         # move the RAM value that in the given address to register A
         self._setCommand(110, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MAO | Signals.RAI
         ))
@@ -201,7 +203,7 @@ class MicroCode(object):
         # MOV A [RAM_ADDRESS]
         # move register A value to RAM in the given address
         self._setCommand(114, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.RAO | Signals.MAI
         ))
@@ -225,7 +227,7 @@ class MicroCode(object):
         # MOV VALUE B
         # move the given value to register B
         self._setCommand(122, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.RBI
         ))
 
@@ -253,7 +255,7 @@ class MicroCode(object):
         # MOV {ROM_ADDRESS} B
         # move the ROM value that in the given address to register B
         self._setCommand(126, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MOO | Signals.RBI
         ))
@@ -282,7 +284,7 @@ class MicroCode(object):
         # MOV [RAM_ADDRESS] B
         # move the RAM value that in the given address to register B
         self._setCommand(130, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MAO | Signals.RBI
         ))
@@ -311,7 +313,7 @@ class MicroCode(object):
         # MOV B [RAM_ADDRESS]
         # move register B value to RAM in the given address
         self._setCommand(134, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.RBO | Signals.MAI
         ))
@@ -335,7 +337,7 @@ class MicroCode(object):
         # MOV VALUE C
         # move the given value to register C
         self._setCommand(142, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.RCI
         ))
 
@@ -363,7 +365,7 @@ class MicroCode(object):
         # MOV {ROM_ADDRESS} C
         # move the ROM value that in the given address to register C
         self._setCommand(146, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MOO | Signals.RCI
         ))
@@ -392,7 +394,7 @@ class MicroCode(object):
         # MOV [RAM_ADDRESS] C
         # move the RAM value that in the given address to register C
         self._setCommand(150, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MAO | Signals.RCI
         ))
@@ -421,7 +423,7 @@ class MicroCode(object):
         # MOV C [RAM_ADDRESS]
         # move register C value to RAM in the given address
         self._setCommand(154, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.RCO | Signals.MAI
         ))
@@ -434,28 +436,28 @@ class MicroCode(object):
         # calculate the sum of register A value with register A value (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(160, (
             Signals.RAO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD B
         # calculate the sum of register A value with register B value (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(161, (
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD C
         # calculate the sum of register A value with register C value (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(162, (
             Signals.RCO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD VALUE
         # calculate the sum of register A value with the given value (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(163, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD {A}
@@ -463,7 +465,7 @@ class MicroCode(object):
         self._setCommand(164, (
             Signals.RAO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD {B}
@@ -471,7 +473,7 @@ class MicroCode(object):
         self._setCommand(165, (
             Signals.RBO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD {C}
@@ -479,16 +481,16 @@ class MicroCode(object):
         self._setCommand(166, (
             Signals.RCO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD {ROM_ADDRESS}
         # calculate the sum of register A value with the ROM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(167, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD [A]
@@ -496,7 +498,7 @@ class MicroCode(object):
         self._setCommand(168, (
             Signals.RAO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD [B]
@@ -504,7 +506,7 @@ class MicroCode(object):
         self._setCommand(169, (
             Signals.RBO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD [C]
@@ -512,16 +514,16 @@ class MicroCode(object):
         self._setCommand(170, (
             Signals.RCO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         # ADD [RAM_ADDRESS]
         # calculate the sum of register A value with the RAM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(171, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.ADDITION
+            MicroCommands.ADDITION
         ))
 
         ################################################################################
@@ -532,28 +534,28 @@ class MicroCode(object):
         # calculate the subtraction of register A value with register A value (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(180, (
             Signals.RAO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB B
         # calculate the subtraction of register A value with register B value (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(181, (
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB C
         # calculate the subtraction of register A value with register C value (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(182, (
             Signals.RCO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB VALUE
         # calculate the subtraction of register A value with the given value (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(183, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB {A}
@@ -561,7 +563,7 @@ class MicroCode(object):
         self._setCommand(184, (
             Signals.RAO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB {B}
@@ -569,7 +571,7 @@ class MicroCode(object):
         self._setCommand(185, (
             Signals.RBO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB {C}
@@ -577,16 +579,16 @@ class MicroCode(object):
         self._setCommand(186, (
             Signals.RCO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB {ROM_ADDRESS}
         # calculate the subtraction of register A value with the ROM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(187, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB [A]
@@ -594,7 +596,7 @@ class MicroCode(object):
         self._setCommand(188, (
             Signals.RAO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB [B]
@@ -602,7 +604,7 @@ class MicroCode(object):
         self._setCommand(189, (
             Signals.RBO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB [C]
@@ -610,16 +612,16 @@ class MicroCode(object):
         self._setCommand(190, (
             Signals.RCO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         # SUB [RAM_ADDRESS]
         # calculate the subtraction of register A value with the RAM value that in the given address (put the result in register A, override register B, ZF and CF flags are affected)
         self._setCommand(191, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.SUBTRACTION
+            MicroCommands.SUBTRACTION
         ))
 
         ################################################################################
@@ -630,28 +632,28 @@ class MicroCode(object):
         # compare (subtract) register A value with register A value (doesn't save the result, override register B, ZF and CF flags are affected)
         self._setCommand(200, (
             Signals.RAO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP B
         # compare (subtract) register A value with register B value (doesn't save the result, override register B, ZF and CF flags are affected)
         self._setCommand(201, (
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP C
         # compare (subtract) register A value with register C value (doesn't save the result, override register B, ZF and CF flags are affected)
         self._setCommand(202, (
             Signals.RCO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP VALUE
         # compare (subtract) register A value with the given value (doesn't save the result, override register B, ZF and CF flags are affected)
         self._setCommand(203, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP {A}
@@ -659,7 +661,7 @@ class MicroCode(object):
         self._setCommand(204, (
             Signals.RAO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP {B}
@@ -667,7 +669,7 @@ class MicroCode(object):
         self._setCommand(205, (
             Signals.RBO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP {C}
@@ -675,16 +677,16 @@ class MicroCode(object):
         self._setCommand(206, (
             Signals.RCO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP {ROM_ADDRESS}
         # compare (subtract) register A value with the ROM value that in the given address (doesn't save the result, override register B, ZF and CF flags are affected)
         self._setCommand(207, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MOO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP [A]
@@ -692,7 +694,7 @@ class MicroCode(object):
         self._setCommand(208, (
             Signals.RAO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP [B]
@@ -700,7 +702,7 @@ class MicroCode(object):
         self._setCommand(209, (
             Signals.RBO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP [C]
@@ -708,16 +710,16 @@ class MicroCode(object):
         self._setCommand(210, (
             Signals.RCO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         # CMP [RAM_ADDRESS]
         # compare (subtract) register A value with the RAM value that in the given address (doesn't save the result, override register B, ZF and CF flags are affected)
         self._setCommand(211, (
-            MicroInstructions.IP_TO_MP,
+            MicroCommands.IP_TO_MP,
             Signals.MOO | Signals.MPI,
             Signals.MAO | Signals.RBI,
-            MicroInstructions.COMPARE
+            MicroCommands.COMPARE
         ))
 
         ################################################################################
@@ -727,50 +729,50 @@ class MicroCode(object):
         # JMP VALUE
         # jump to the given address
         self._setCommand(220, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | MicroInstructions.JMP
+            MicroCommands.IP_TO_MP,
+            Signals.MOO | MicroCommands.JMP
         ))
 
         # JB VALUE
         # jump to the given address if CMP < 0 (CF==1)
         self._setCommand(221, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | MicroInstructions.JB
+            MicroCommands.IP_TO_MP,
+            Signals.MOO | MicroCommands.JB
         ))
 
         # JBE VALUE
         # jump to the given address if CMP <= 0 (ZF==1 or CF==1)
         self._setCommand(222, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | MicroInstructions.JBE
+            MicroCommands.IP_TO_MP,
+            Signals.MOO | MicroCommands.JBE
         ))
 
         # JE VALUE
         # jump to the given address if CMP == 0 (ZF==1)
         self._setCommand(223, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | MicroInstructions.JE
+            MicroCommands.IP_TO_MP,
+            Signals.MOO | MicroCommands.JE
         ))
 
         # JNE VALUE
         # jump to the given address if CMP != 0 (ZF==0)
         self._setCommand(224, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | MicroInstructions.JNE
+            MicroCommands.IP_TO_MP,
+            Signals.MOO | MicroCommands.JNE
         ))
 
         # JAE VALUE
         # jump to the given address if CMP >= 0 (CF==0)
         self._setCommand(225, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | MicroInstructions.JAE
+            MicroCommands.IP_TO_MP,
+            Signals.MOO | MicroCommands.JAE
         ))
 
         # JA VALUE
         # jump to the given address if CMP > 0 (ZF==0 and CF==0)
         self._setCommand(226, (
-            MicroInstructions.IP_TO_MP,
-            Signals.MOO | MicroInstructions.JA
+            MicroCommands.IP_TO_MP,
+            Signals.MOO | MicroCommands.JA
         ))
 
         ################################################################################
@@ -780,44 +782,146 @@ class MicroCode(object):
         # JMP A
         # jump to the address that in register A
         self._setCommand(230, (
-            Signals.RAO | MicroInstructions.JMP
+            Signals.RAO | MicroCommands.JMP
         ))
 
         # JB A
         # jump to the address that in register A if CMP < 0 (CF==1)
         self._setCommand(231, (
-            Signals.RAO | MicroInstructions.JB
+            Signals.RAO | MicroCommands.JB
         ))
 
         # JBE A
         # jump to the address that in register A if CMP <= 0 (ZF==1 or CF==1)
         self._setCommand(232, (
-            Signals.RAO | MicroInstructions.JBE
+            Signals.RAO | MicroCommands.JBE
         ))
 
         # JE A
         # jump to the address that in register A if CMP == 0 (ZF==1)
         self._setCommand(233, (
-            Signals.RAO | MicroInstructions.JE
+            Signals.RAO | MicroCommands.JE
         ))
 
         # JNE A
         # jump to the address that in register A if CMP != 0 (ZF==0)
         self._setCommand(234, (
-            Signals.RAO | MicroInstructions.JNE
+            Signals.RAO | MicroCommands.JNE
         ))
 
         # JAE A
         # jump to the address that in register A if CMP >= 0 (CF==0)
         self._setCommand(235, (
-            Signals.RAO | MicroInstructions.JAE
+            Signals.RAO | MicroCommands.JAE
         ))
 
         # JA A
         # jump to the address that in register A if CMP > 0 (ZF==0 and CF==0)
         self._setCommand(236, (
-            Signals.RAO | MicroInstructions.JA
+            Signals.RAO | MicroCommands.JA
         ))
+
+
+class SecondaryMicroCode(object):
+
+    class InSignals(IntFlag):
+        IPJ1 = 2**0  # INSTRUCTION  POINTER  JUMP_1
+        IPJ2 = 2**1  # INSTRUCTION  POINTER  JUMP_2
+        IPJ3 = 2**2  # INSTRUCTION  POINTER  JUMP_3
+        IPJ4 = 2**3  # INSTRUCTION  POINTER  JUMP_4
+
+        CF = 2**8  # CARRY FLAG
+        ZF = 2**9  # ZERO FLAG
+
+    class OutSignals(IntFlag):
+        NOP = 0
+        IPJ = 2**20  # INSTRUCTION  POINTER  JUMP_1
+
+    def __init__(self):
+        self._initializeDataStructure()
+        self._fillMicroCode()
+
+    def _initializeDataStructure(self) -> None:
+        # create a array representing the default secondary micro code
+        self.data = [SecondaryMicroCode.OutSignals.NOP for i in range(ADDRESS_SPACE_SIZE)]
+
+    def _setJumpCommand(self, inSignals: SecondaryMicroCode.InSignals, zf: bool = None, cf: bool = None) -> None:
+        assert inSignals < 2**4
+        inSignals = 0b1111 - inSignals
+
+        for i in range(2**7):
+            fullAddress = (i << 4) | inSignals
+
+            if (zf is False and fullAddress & SecondaryMicroCode.InSignals.ZF != 0) or
+            (zf is True and fullAddress & SecondaryMicroCode.InSignals.ZF == 0) or
+            (cf is False and fullAddress & SecondaryMicroCode.InSignals.CF != 0) or
+            (cf is True and fullAddress & SecondaryMicroCode.InSignals.CF == 0):
+                break
+
+            self.data[fullAddress] = SecondaryMicroCode.OutSignals.IPJ
+
+    def dumps(self) -> bytes:
+        pass
+
+    def _fillMicroCode(self) -> None:
+        # fill the micro code commands
+
+        ################################################################################
+        # JMP secondary instructions
+        ################################################################################
+
+        # JMP
+        # jump to the given address
+        self._setJumpCommand(
+            SecondaryMicroCode.InSignals.IPJ1
+        )
+
+        # JB
+        # jump to the given address if CMP < 0 (CF==1)
+        self._setJumpCommand(
+            SecondaryMicroCode.InSignals.IPJ2,
+            cf=True
+        )
+
+        # JBE
+        # jump to the given address if CMP <= 0 (ZF==1 or CF==1)
+        self._setJumpCommand(
+            SecondaryMicroCode.InSignals.IPJ1 | SecondaryMicroCode.InSignals.IPJ2,
+            zf=True
+        )
+        self._setJumpCommand(
+            SecondaryMicroCode.InSignals.IPJ1 | SecondaryMicroCode.InSignals.IPJ2,
+            cf=True
+        )
+
+        # JE
+        # jump to the given address if CMP == 0 (ZF==1)
+        self._setJumpCommand(
+            SecondaryMicroCode.InSignals.IPJ3,
+            zf=True
+        )
+
+        # JNE
+        # jump to the given address if CMP != 0 (ZF==0)
+        self._setJumpCommand(
+            SecondaryMicroCode.InSignals.IPJ1 | SecondaryMicroCode.InSignals.IPJ3,
+            zf=False
+        )
+
+        # JAE
+        # jump to the given address if CMP >= 0 (CF==0)
+        self._setJumpCommand(
+            SecondaryMicroCode.InSignals.IPJ2 | SecondaryMicroCode.InSignals.IPJ3,
+            cf=False
+        )
+
+        # JA
+        # jump to the given address if CMP > 0 (ZF==0 and CF==0)
+        self._setJumpCommand(
+            SecondaryMicroCode.InSignals.IPJ1 | SecondaryMicroCode.InSignals.IPJ1 | SecondaryMicroCode.InSignals.IPJ3
+            zf=False,
+            cf=False
+        )
 
 
 def main() -> None:
