@@ -1,5 +1,5 @@
 // imports
-#include "Arduino binaries/arduino_binary_7_segments_logics_anode_positive_binary.h"
+#include "Arduino binaries/SumArrayAndMultiplyTheResult.h"
 
 // pins
 #define PIN_ADDRESS_DATA          (2)
@@ -208,4 +208,3 @@ void WriteEEPROM() {
   Serial.println("");
   Serial.println("");
 }
-
