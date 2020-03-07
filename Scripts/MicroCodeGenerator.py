@@ -72,7 +72,9 @@ class MicroCode():
         assert commandAddress < NUM_OF_COMMANDS
         assert len(microCommands) <= NUM_OF_MICRO_COMMANDS_PER_COMMAND - 2
 
-        microCommands = [*microCommands, MicroCommands.IP_TO_MP, MicroCommands.MO_TO_IH, Signals.CCR][:8]
+        microCommands.extend([MicroCommands.NOP] * (6 - len(microCommands)))
+        microCommands.append(MicroCommands.IP_TO_MP)
+        microCommands.append(MicroCommands.MO_TO_IH)
 
         for (i, microCommand) in enumerate(microCommands):
             fullAddress = (i << 8) | commandAddress
