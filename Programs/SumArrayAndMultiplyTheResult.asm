@@ -12,11 +12,11 @@ $result [1]                       // a var on RAM of 1 bytes on $result address
 // code
 $initializeVars:
     // initialize the variables
-    MOV 0 A
-    MOV A [$index]
-    MOV A [$sum]
-    MOV A [$multiplierIteration]
-    MOV A [$result]
+    MOV 0 C
+    MOV C [$index]
+    MOV C [$sum]
+    MOV C [$multiplierIteration]
+    MOV C [$result]
 
 $sumArray:
     // if $index reached $arraySize then jump to $multiplySum

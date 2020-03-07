@@ -231,6 +231,10 @@ class Assembler():
         self._program: bytearray = bytearray()
         self._fetchingMap: Dict[str, List[int]] = {}
 
+        # Add 2 NOPs to the start of each program
+        self._program.append(1)
+        self._program.append(1)
+
         self._parseLines(lines)
         self._fetchParams()
 

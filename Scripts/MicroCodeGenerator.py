@@ -37,7 +37,7 @@ class MicroCommands(IntFlag):
     NOP = 0
 
     IP_TO_MP = Signals.IPO | Signals.MPI | Signals.IPC
-    MO_TO_IH = Signals.MOO | Signals.IHI | Signals.CCR
+    MO_TO_IH = Signals.MOO | Signals.IHI
 
     ADDITION = Signals.ALO | Signals.RAI | Signals.RFI
     SUBTRACTION = Signals.ALO | Signals.RAI | Signals.RFI | Signals.ALF
@@ -59,7 +59,7 @@ DEFAULT_MICRO_COMMAND = Signals.CLH
 INVERT_ALL = True
 
 
-class MicroCode(object):
+class MicroCode():
     def __init__(self):
         self._initializeDataStructure()
         self._fillMicroCode()
@@ -69,10 +69,10 @@ class MicroCode(object):
         self.data = [DEFAULT_MICRO_COMMAND for i in range(ADDRESS_SPACE_SIZE)]
 
     def _setCommand(self, commandAddress: int, microCommands: List[Signals]) -> None:
-        microCommands = (*microCommands, MicroCommands.IP_TO_MP, MicroCommands.MO_TO_IH)
-
         assert commandAddress < NUM_OF_COMMANDS
-        assert len(microCommands) <= NUM_OF_MICRO_COMMANDS_PER_COMMAND
+        assert len(microCommands) <= NUM_OF_MICRO_COMMANDS_PER_COMMAND - 2
+
+        microCommands = [*microCommands, MicroCommands.IP_TO_MP, MicroCommands.MO_TO_IH, Signals.CCR][:8]
 
         for (i, microCommand) in enumerate(microCommands):
             fullAddress = (i << 8) | commandAddress
