@@ -33,7 +33,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('outputPath', metavar='outputPath', type=str, help='The output path')
     parser.add_argument('common', metavar='common', type=str, choices=('anode', 'catode'), help='The display common')
-    parser.add_argument('displays', metavar='displays', type=str, nargs=2, choices=('positive', 'negative', 'hexa', 'binary'), help='The display types')
+    parser.add_argument('displays', metavar='displays', type=str, nargs=2, choices=('positive', 'negative', 'hex', 'binary'), help='The display types')
     args = parser.parse_args()
     global common
     common = args.common
@@ -41,7 +41,7 @@ def main():
     displaysFunctions = {
         'positive': getDecimalNaturalDisplay(),
         'negative': getDecimalIntegerDisplay(),
-        'hexa': getHexadecimalNaturalDisplay(),
+        'hex': getHexadecimalNaturalDisplay(),
         'binary': getBinaryNaturalDisplay(),
     }
 

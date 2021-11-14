@@ -8,7 +8,7 @@ Support the declaration of:
 Defineds - $definedName VALUE            - every mention of a defined will be replaced with its value.
 Consts   - $constName {VALUE VALUE, ...} - list of values that will be appended to the program on ROM, every mention of a const will be replaced with its address.
 Vars     - $varName [varSize]            - var is a reserved memory on RAM in the length of varSize bytes, every mention of a var will be replaced with its address.
-Lables   - $lableName:                   - every mention of a lable will be replaced with the address of the command that follows the lable.
+Labels   - $labelName:                   - every mention of a label will be replaced with the address of the command that follows the label.
 
 Support comments by the use of '//' or '#'.
 
@@ -227,7 +227,7 @@ class Assembler():
         self._consts: Dict[str, bytearray] = {}
         self._vars: Dict[str, int] = {}
         self._defineds: Dict[str, int] = {}
-        self._lables: Dict[str, int] = {}
+        self._labels: Dict[str, int] = {}
         self._program: bytearray = bytearray()
         self._fetchingMap: Dict[str, List[int]] = {}
 
@@ -252,7 +252,7 @@ class Assembler():
             if self._parseConst(line) or \
                     self._parseVar(line) or \
                     self._parseDefined(line) or \
-                    self._parseLable(line) or \
+                    self._parseLabel(line) or \
                     self._parseCommand(line):
                 print(f'Successfully parsed line {lineNum:04}: {line}')
                 continue
@@ -298,12 +298,12 @@ class Assembler():
             return True
         return False
 
-    def _parseLable(self, line: str) -> bool:
+    def _parseLabel(self, line: str) -> bool:
         match = parse('${}:', line)
         if match:
             key = match.fixed[0]
-            lableAddress = len(self._program)
-            self._lables[key] = lableAddress
+            labelAddress = len(self._program)
+            self._labels[key] = labelAddress
             return True
         return False
 
@@ -345,7 +345,7 @@ class Assembler():
         self._fetchConsts()
         self._fetchVars()
         self._fetchDefineds()
-        self._fetchLables()
+        self._fetchLabels()
 
         assert len(self._fetchingMap) == 0
 
@@ -370,10 +370,10 @@ class Assembler():
             for fetchingAddress in self._fetchingMap.pop(key, []):
                 self._program[fetchingAddress] = definedValue
 
-    def _fetchLables(self) -> None:
-        for (key, lableAddress) in self._lables.items():
+    def _fetchLabels(self) -> None:
+        for (key, labelAddress) in self._labels.items():
             for fetchingAddress in self._fetchingMap.pop(key, []):
-                self._program[fetchingAddress] = lableAddress
+                self._program[fetchingAddress] = labelAddress
 
 
 def main() -> None:
